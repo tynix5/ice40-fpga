@@ -24,7 +24,6 @@ module counter (
     );
 
 
-
     always @ (posedge clk) begin
 
         case (rst)
