@@ -16,7 +16,7 @@ module uart_rx #(
     localparam MODE_STOP = 2'b11;
 
     // timing constants
-    localparam FREQ = 32'd50_000_000;               // 50 MHz
+    localparam FREQ = 32'd100_000_000;               // 100 MHz
     localparam UART_TICK = FREQ / BAUD;              // ticks per serial bit
     localparam SAMPLE_TICK = UART_TICK / 2;          // sample in middle of serial bit
 
