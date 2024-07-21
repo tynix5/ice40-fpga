@@ -9,9 +9,10 @@ module uart_tb();
     reg wr_en;
     reg [7:0] data_in;
     wire [7:0] data_out;
+    wire tx_empty, rx_full;
 
-    uart_tx #(.BAUD(9600)) uart_t(.clk(clk), .rst(rst), .wr_en(wr_en), .byte(data_in), .tx(serial));
-    uart_rx #(.BAUD(9600)) uart_r(.clk(clk), .rst(rst), .rx(serial), .byte(data_out));
+    uart_tx #(.BAUD(9600)) uart_t(.clk(clk), .rst(rst), .wr_en(wr_en), .byte(data_in), .tx_empty(tx_empty), .tx(serial));
+    uart_rx #(.BAUD(9600)) uart_r(.clk(clk), .rst(rst), .rx(serial), .rx_full(rx_full), .byte(data_out));
 
     initial begin
         // Create simulation output file

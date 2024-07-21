@@ -5,8 +5,9 @@ module uart_rx #(
 
     input clk,
     input rst,
-    input rx,           
-    output [7:0] byte         // rx data output
+    input rx,                  // uart data in line
+    output rx_full,             // rx register full
+    output [7:0] byte          // rx data output
 );
 
     // state machine
@@ -24,12 +25,14 @@ module uart_rx #(
     reg [1:0] mode, mode_next;
     reg [7:0] data, data_next, out, out_next;
     reg [2:0] data_cnt, data_cnt_next;
+    reg rx_full_reg, rx_full_next;
 
     // very large timer to be safe...
     // ex. 100 MHz clock / 9600 baud = 10416 clock ticks per uart sample
     reg [31:0] tim, tim_next;
 
     assign byte = out;
+    assign rx_full = rx_full_reg;
 
     always @(posedge clk or posedge rst) begin
 
@@ -39,6 +42,7 @@ module uart_rx #(
             out <= 8'b0;
             data_cnt <= 3'b0;
             tim <= 32'b0;
+            rx_full_reg <= 1'b0;
         end
         else begin
             // update state
@@ -47,6 +51,7 @@ module uart_rx #(
             data_cnt <= data_cnt_next;
             data <= data_next;
             out <= out_next;
+            rx_full_reg <= rx_full_next;
         end
     end
 
@@ -58,6 +63,7 @@ module uart_rx #(
         data_next = data;
         out_next = out;
         data_cnt_next = data_cnt;
+        rx_full_next = rx_full_reg;
 
         case (mode)
 
@@ -66,6 +72,7 @@ module uart_rx #(
                 if (!rx) begin
                     tim_next = 32'b0;           // reset timer...
                     mode_next = MODE_START;     // start bit detected
+                    rx_full_next = 1'b0;        // new byte to be received
                 end
             end
 
@@ -114,6 +121,7 @@ module uart_rx #(
                     tim_next = 32'b0;
                     out_next = data_next;           // latch received data
                     mode_next = MODE_IDLE;          // end of transmission, idle
+                    rx_full_next = 1'b1;            // byte received
                 end
             end
 

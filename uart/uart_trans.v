@@ -7,7 +7,7 @@ module uart_tx #(
     input rst,
     input wr_en,                // write enable
     input [7:0] byte,           // data input
-    output busy,                // uart busy line
+    output tx_empty,            // uart tx empty line
     output tx                   // uart data out line
 );
 
@@ -24,10 +24,10 @@ module uart_tx #(
     reg [31:0] tim, tim_next;               // timer
     reg [2:0] data_cnt, data_cnt_next;      // data bits transmitted
     reg [7:0] data_latch, data_latch_next;  // data to be sent
-    reg tx_reg, tx_next, busy_reg, busy_next;
+    reg tx_reg, tx_next, tx_empty_reg, tx_empty_next;
     
     assign tx = tx_reg;
-    assign busy = busy_reg;
+    assign tx_empty = tx_empty_reg;
 
     // current state
     always @(posedge clk or posedge rst) begin
@@ -38,7 +38,7 @@ module uart_tx #(
             data_cnt <= 3'b000;
             tim <= 32'b0;
             tx_reg <= 1'b1;
-            busy_reg <= 1'b0;
+            tx_empty_reg <= 1'b0;
             data_latch <= 8'b0;
         end
         else begin
@@ -47,7 +47,7 @@ module uart_tx #(
             data_cnt <= data_cnt_next;
             tim <= tim_next;
             tx_reg <= tx_next;
-            busy_reg <= busy_next;
+            tx_empty_reg <= tx_empty_next;
             data_latch <= data_latch_next;
         end
     end
@@ -60,7 +60,7 @@ module uart_tx #(
         mode_next = mode;
         tx_next = tx_reg;
         data_cnt_next = data_cnt;
-        busy_next = busy_reg;
+        tx_empty_next = tx_empty_reg;
         data_latch_next = data_latch;
 
         case (mode) 
@@ -71,7 +71,7 @@ module uart_tx #(
                     tx_next = 1'b0;         // start bit    
                     tim_next = 32'b0;       // reset timer
                     mode_next = MODE_START; // go to start state
-                    busy_next = 1'b1;       // uart is busy...
+                    tx_empty_next = 1'b1;   // uart is busy...
                     data_latch_next = byte; // latch data
                 end
             end
@@ -103,7 +103,7 @@ module uart_tx #(
                 if (tim == UART_TICK) begin // stop bit complete
                     mode_next = MODE_IDLE;
                     tim_next = 32'b0;
-                    busy_next = 1'b0;       // uart free now
+                    tx_empty_next = 1'b0;       // uart free now
                 end
             end
         endcase
