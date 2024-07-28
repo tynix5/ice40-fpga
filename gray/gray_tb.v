@@ -6,7 +6,7 @@ module gray_tb();
     reg clk = 0, rst, en;
     wire [3:0] bin, gray;
 
-    gray #(.MOD(16)) gray_cnt(.clk(clk), .rst(rst), .en(en), .bin_out(bin), .gray_out(gray));
+    gray #(.MOD(11)) gray_cnt(.clk(clk), .rst(rst), .en(en), .bin_out(bin), .gray_out(gray));
 
     initial begin
 
@@ -32,8 +32,6 @@ module gray_tb();
         forever begin
             #5
             clk = ~clk;
-            // if (clk)
-            //     $display("bin: %b       gray: %b", bin, gray);
         end
     end
 

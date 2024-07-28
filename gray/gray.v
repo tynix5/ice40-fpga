@@ -3,9 +3,9 @@ module gray #(
 )(
     input clk,
     input rst,
-    input en,
-    output [$clog2(MOD)-1:0] bin_out,
-    output [$clog2(MOD)-1:0] gray_out
+    input en,                             // enable
+    output [GRAY_BITS-1:0] bin_out,       // binary counter out
+    output [GRAY_BITS-1:0] gray_out       // gray counter out
 );
 
     localparam GRAY_BITS = $clog2(MOD);         // number of bits needed to reach MOD
@@ -34,8 +34,12 @@ module gray #(
         gray_next = gray_reg;
 
         if (en) begin
-            bin_next = bin_reg + 1'b1;      // increment binary counter
+            bin_next = bin_reg + 1'b1;                  // increment binary counter
             gray_next = bin_next ^ (bin_next >> 1);     // increment gray counter
+            if (bin_next == MOD) begin                  // if reached the top, reset
+                bin_next = {GRAY_BITS{1'b0}};
+                gray_next = {GRAY_BITS{1'b0}};
+            end
         end
     end
 
