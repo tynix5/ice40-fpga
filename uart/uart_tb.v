@@ -28,10 +28,11 @@ module uart_tb();
         $finish;
     end
 
+
     initial begin
 
         // initialize
-        data_in = 8'b11110000;
+        data_in = 8'b11110010;
         #5
         rst = 1;
         #5
