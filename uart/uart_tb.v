@@ -50,9 +50,9 @@ module uart_tb();
     always begin
 
         // 100 MHz
-        #5
+        #50
         clk = 1;
-        #5
+        #50
         clk = 0;
     end
 
