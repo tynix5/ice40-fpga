@@ -1,0 +1,12 @@
+set_io      clk                 P7
+set_io      rst_n               P8
+
+set_io      hsync               H4
+set_io      vsync               F4
+set_io      r                   N1
+set_io      g                   K3
+set_io      b                   H1
+set_io      paddleleft_up       D4
+set_io      paddleleft_down     D5
+set_io      paddleright_up      A5
+set_io      paddleright_down    C7
