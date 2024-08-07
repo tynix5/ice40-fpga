@@ -12,7 +12,7 @@ module debouncer (
     reg press_reg;  // button tick
 
     synchronizer #(.SYNC_STAGES(2)) btn_synchronizer(.clk(clk), .rst(rst), .async_in(btn), .sync_out(btn_sync)); // synchronize input for cdc reasons
-    mod #(.MOD(2_000_000)) db_tim(.clk(clk), .rst(rst), .cen(tim_en), .q(), .sync_ovf(db_ovf));        // 20ms for debouncing
+    mod #(.MOD(2_000_000)) db_tim(.clk(clk), .rst(rst), .cen(tim_en), .q(), .sync_ovf(db_ovf));                 // 20ms for debouncing
 
 
     always @(posedge clk or posedge rst) begin
