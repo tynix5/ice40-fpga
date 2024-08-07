@@ -116,7 +116,7 @@ module pong_vga (
                 // setup blank and sync lines
                 case (px)
                     H_START_BLANK:      hblank <= 1'b1;
-                    H_START_BLANK:      hsync_reg <= 1'b0;
+                    H_START_SYNC:      hsync_reg <= 1'b0;
                     H_END_SYNC:         hsync_reg <= 1'b1;
                     H_END_BLANK:        hblank <= 1'b0;
                 endcase
