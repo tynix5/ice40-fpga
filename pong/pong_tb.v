@@ -30,27 +30,36 @@ module pong_tb();
 
     wire h, v;
     reg clk = 0, rst;
+    wire [34:0] segments;
 
-    pong_vga vga_uut(
-    .clk(clk), 
-    .rst(rst), 
-    .sprite1_xmin(10),
-    .sprite1_xmax(20),
-    .sprite1_ymin(100),
-    .sprite1_ymax(200),
-    .sprite2_xmin(380),
-    .sprite2_xmax(390),
-    .sprite2_ymin(100),
-    .sprite2_ymax(200),
-    .sprite3_x(0),
-    .sprite3_y(0),
-    .sprite3_rad(0),
-    .blank(),
-    .hsync(h),
-    .vsync(v),
-    .r(r),
-    .g(g),
-    .b(b));
+
+    wire [5:0] left_count;
+    reg left_en;
+    // pong_score left_uut(.clk(clk), .rst(rst), .score(scoreleft), .state(leftdata));
+    mod #(.MOD(35)) left_score_mod(.clk(clk), .rst(rst), .cen(left_en), .q(left_count));
+
+    pong_score score_uut(.clk(clk), .rst(rst), .score(4'd0), .state(segments));
+
+    // pong_vga vga_uut(
+    // .clk(clk), 
+    // .rst(rst),
+    // .sprite1_xmin(10),
+    // .sprite1_xmax(20),
+    // .sprite1_ymin(100),
+    // .sprite1_ymax(200),
+    // .sprite2_xmin(380),
+    // .sprite2_xmax(390),
+    // .sprite2_ymin(100),
+    // .sprite2_ymax(200),
+    // .sprite3_x(0),
+    // .sprite3_y(0),
+    // .sprite3_rad(0),
+    // .blank(),
+    // .hsync(h),
+    // .vsync(v),
+    // .r(r),
+    // .g(g),
+    // .b(b));
 
     initial begin
 
@@ -71,6 +80,7 @@ module pong_tb();
         rst = 1;
         #10
         rst = 0;
+        left_en = 1;
         // stream of clock pulses (100 MHz)
         forever begin
             #5

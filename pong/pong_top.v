@@ -65,10 +65,15 @@ module pong_top (
     wire game_ready;
     mod #(.MOD(300_000_000)) newgame_mod(.clk(clk), .rst(rst), .cen(newgame_en), .q(), .sync_ovf(game_ready));      // 3 seconds between games
 
+
+    reg [3:0] scoreleft, scoreright;
+
     // initialize screen
     pong_vga screen(
         .clk(clk), 
         .rst(rst), 
+        .scoreleft(scoreleft),   // test
+        .scoreright(scoreright),  // test
         .paddleleft_xmin(PADDLELEFT_XMIN),
         .paddleleft_xmax(PADDLELEFT_XMIN + PADDLE_WIDTH),
         .paddleleft_ymin(paddleleft_y),
@@ -100,6 +105,9 @@ module pong_top (
             ball_xvel <= 2'b0;      // ball not moving
             ball_yvel <= 2'b0;      // ball not moving
             newgame_en <= 1'b1;     // wait a little to start new game
+
+            scoreleft <= 4'b0;
+            scoreright <= 4'b0;
         end
         else begin
 
@@ -155,6 +163,15 @@ module pong_top (
                     if (ball_x < PADDLELEFT_XMIN + PADDLE_WIDTH || ball_x > PADDLERIGHT_XMAX - PADDLE_WIDTH) begin
                         // point is scored, start new game and tally point
                         newgame_en <= 1'b1;
+
+                        if (scoreleft == 4'b1001 || scoreright == 4'b1001) begin
+                            scoreleft <= 4'b0;
+                            scoreright <= 4'b0;
+                        end
+                        else if (ball_x < PADDLELEFT_XMIN + PADDLE_WIDTH)
+                            scoreright <= scoreright + 1'b1;
+                        else
+                            scoreleft <= scoreleft + 1'b1;
                     end
                     
                     
