@@ -63,41 +63,43 @@ module pong_vga (
     localparam NET_START = SCREEN_WIDTH / 2 - NET_WIDTH / 2 - 1;
     localparam NET_END = SCREEN_WIDTH / 2 + NET_WIDTH / 2 - 1;
     // Score display constraints
-    localparam SCORE_WIDTH = 5;
-    localparam LEFT_SCORE_START = NET_START - 10;
+    localparam SCORE_WIDTH = 10;
+    localparam LEFT_SCORE_START = NET_START - SCORE_WIDTH - 10;
     localparam RIGHT_SCORE_START = NET_END + 10;
     localparam SCORE_Y_START = 10;
-    localparam SCORE_HEIGHT = 7;
+    localparam SCORE_HEIGHT = 35;
     localparam SCORE_Y_END = SCORE_Y_START + SCORE_HEIGHT;
 
     /*************************************************************************************/
+    /*************************** Score Counters and Logic ********************************/
     /*************************************************************************************/
-    /*************************************************************************************/
-    reg left_en, right_en;
-    wire [34:0] scoreleft_bitmap, scoreright_bitmap;
-    wire [5:0] scoreleft_bmpx, scoreright_bmpx;
-    pong_score score_left(.clk(clk), .rst(rst), .score(scoreleft), .state(scoreleft_bitmap));
-    pong_score score_right(.clk(clk), .rst(rst), .score(scoreright), .state(scoreright_bitmap));
-    mod #(.MOD(35)) score_left_mod(.clk(clk), .rst(rst), .cen(left_en), .q(scoreleft_bmpx));
-    mod #(.MOD(35)) score_right_mod(.clk(clk), .rst(rst), .cen(right_en), .q(scoreright_bmpx));
+    wire [349:0] scoreleft_bitmap, scoreright_bitmap;       // left and right score bitmap
+    wire [$clog2(350):0] scoreleft_bmptr, scoreright_bmptr; // left and right score bitmap pointers
+    reg scoreleft_ptr_en, scoreright_ptr_en;                // left and right score pointer counter enable
+    pong_score score_left(.score(scoreleft), .state(scoreleft_bitmap));
+    pong_score score_right(.score(scoreright), .state(scoreright_bitmap));
+    mod #(.MOD(350)) score_left_mod(.clk(clk), .rst(rst), .cen(scoreleft_ptr_en), .q(scoreleft_bmptr));
+    mod #(.MOD(350)) score_right_mod(.clk(clk), .rst(rst), .cen(scoreright_ptr_en), .q(scoreright_bmptr));
     /*************************************************************************************/
     /*************************************************************************************/
     /*************************************************************************************/
     
 
-    reg px_state;                       // pixel state
-
+    /*************************************************************************************/
+    /*********************** Horizontal and Vertical Sync Counters ***********************/
+    /*************************************************************************************/
     wire [H_BITS-1:0] px;               // horizontal (pixel) counter
     wire [V_BITS-1:0] line;             // vertical (line) counter
-              
     reg hsync_reg, vsync_reg;           // horizontal and vertical sync registers
     wire htrans_edge, vtrans_edge;      // horizontal and vertical transition edges
     reg hblank, vblank;                 // horizontal and vertical blanking
-
+    reg px_state;                       // pixel state
     mod #(.MOD(5)) div5_mod(.clk(clk), .rst(rst), .cen(1'b1), .q(), .sync_ovf(htrans_edge));                    // divides 100 MHz signal into 20 MHz
     mod #(.MOD(H_LINE_PX)) px_mod(.clk(clk), .rst(rst), .cen(htrans_edge), .q(px), .sync_ovf(vtrans_edge));     // pixel counter updated at 20 MHz
     mod #(.MOD(V_LINE)) line_mod(.clk(clk), .rst(rst), .cen(vtrans_edge), .q(line));               // line counter updated at every pixel counter overflow
-
+    /*************************************************************************************/
+    /*************************************************************************************/
+    /*************************************************************************************/
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -108,8 +110,8 @@ module pong_vga (
             vblank <= 1'b0;
             px_state <= 1'b0;
 
-            left_en <= 1'b0;
-            right_en <= 1'b0;
+            scoreleft_ptr_en <= 1'b0;
+            scoreright_ptr_en <= 1'b0;
         end
         else begin
 
@@ -120,8 +122,8 @@ module pong_vga (
             vsync_reg <= vsync_reg;
             px_state <= px_state;
 
-            left_en <= 1'b0;
-            right_en <= 1'b0;
+            scoreleft_ptr_en <= 1'b0;
+            scoreright_ptr_en <= 1'b0;
 
             if (htrans_edge) begin          // when pixel is about to change, setup next pixel state
 
@@ -131,14 +133,14 @@ module pong_vga (
                 if (px >= NET_START && px <= NET_END && ~line[3])
                     px_state <= 1'b1;
 
-                // generate score for both players
+                // generate score for both players using bitmap
                 if (px >= LEFT_SCORE_START && px < LEFT_SCORE_START + SCORE_WIDTH && line >= SCORE_Y_START && line < SCORE_Y_END) begin
-                    left_en <= 1'b1;
-                    px_state <= scoreleft_bitmap[scoreleft_bmpx];
+                    scoreleft_ptr_en <= 1'b1;
+                    px_state <= scoreleft_bitmap[scoreleft_bmptr];
                 end
                 else if (px >= RIGHT_SCORE_START && px < RIGHT_SCORE_START + SCORE_WIDTH && line >= SCORE_Y_START && line < SCORE_Y_END) begin
-                    right_en <= 1'b1;
-                    px_state <= scoreright_bitmap[scoreright_bmpx];
+                    scoreright_ptr_en <= 1'b1;
+                    px_state <= scoreright_bitmap[scoreright_bmptr];
                 end
 
                 // generate pixels for left paddle

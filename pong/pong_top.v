@@ -105,8 +105,7 @@ module pong_top (
             ball_xvel <= 2'b0;      // ball not moving
             ball_yvel <= 2'b0;      // ball not moving
             newgame_en <= 1'b1;     // wait a little to start new game
-
-            scoreleft <= 4'b0;
+            scoreleft <= 4'b0;      // initialize scores
             scoreright <= 4'b0;
         end
         else begin
@@ -153,25 +152,27 @@ module pong_top (
             /***************************************************************************/
 
             if (~newgame_en) begin
+
                 /***************************************************************************/
                 /*********************** Ball Movement Logic *******************************/
                 /***************************************************************************/
-
                 if (update_ball) begin
 
                     // if ball goes past front face of paddle...
                     if (ball_x < PADDLELEFT_XMIN + PADDLE_WIDTH || ball_x > PADDLERIGHT_XMAX - PADDLE_WIDTH) begin
+
                         // point is scored, start new game and tally point
                         newgame_en <= 1'b1;
 
-                        if (scoreleft == 4'b1001 || scoreright == 4'b1001) begin
+                        // if player has 10 points, reset game
+                        if ((scoreleft == 4'b1001 && ball_x > PADDLERIGHT_XMAX - PADDLE_WIDTH) || (scoreright == 4'b1001 && ball_x < PADDLELEFT_XMIN + PADDLE_WIDTH)) begin
                             scoreleft <= 4'b0;
                             scoreright <= 4'b0;
                         end
-                        else if (ball_x < PADDLELEFT_XMIN + PADDLE_WIDTH)
+                        else if (ball_x < PADDLELEFT_XMIN + PADDLE_WIDTH)       // else if right player scored a point, tally right
                             scoreright <= scoreright + 1'b1;
                         else
-                            scoreleft <= scoreleft + 1'b1;
+                            scoreleft <= scoreleft + 1'b1;                      // else, tally left
                     end
                     
                     
