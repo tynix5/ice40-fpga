@@ -1,10 +1,10 @@
 
 Alchitry Br Pinout
-    A48 - hsync
-    A45 - vsync
-    A42 - r
-    A39 - g
-    A36 - b
+    A48 - r
+    A45 - g
+    A42 - b
+    A39 - hsync
+    A36 - vsync
     A33 - paddleleft_up
     A30 - paddleleft_down
     A27 - paddleright_up
