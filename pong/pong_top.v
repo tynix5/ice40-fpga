@@ -71,8 +71,8 @@ module pong_top (
     pong_vga screen(
         .clk(clk), 
         .rst(rst), 
-        .scoreleft(scoreleft),   // test
-        .scoreright(scoreright),  // test
+        .scoreleft(scoreleft), 
+        .scoreright(scoreright),
         .paddleleft_xmin(PADDLELEFT_XMIN),
         .paddleleft_xmax(PADDLELEFT_XMIN + PADDLE_WIDTH),
         .paddleleft_ymin(paddleleft_y),
