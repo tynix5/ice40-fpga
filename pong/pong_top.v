@@ -65,8 +65,7 @@ module pong_top (
     wire game_ready;
     mod #(.MOD(300_000_000)) newgame_mod(.clk(clk), .rst(rst), .cen(newgame_en), .q(), .sync_ovf(game_ready));      // 3 seconds between games
 
-
-    reg [3:0] scoreleft, scoreright;
+    reg [3:0] scoreleft, scoreright;        // left and right player score
 
     // initialize screen
     pong_vga screen(
@@ -308,7 +307,7 @@ module pong_top (
             else begin
                 ball_x <= INIT_BALL_XMIN;    // initialize ball x
                 ball_y <= INIT_BALL_YMIN;    // initialize ball y
-                ball_xvel <= 2'b0;              // stationary ball
+                ball_xvel <= 2'b0;           // stationary ball
                 ball_yvel <= 2'b0;
                 ball_ydir <= BALL_YDIR_PARALLEL;
                 newgame_en <= newgame_en;
