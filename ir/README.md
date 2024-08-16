@@ -1,0 +1,1 @@
+IR receiver is designed to be used with sparkfun IR remote which uses NEC protocol
