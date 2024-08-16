@@ -22,7 +22,7 @@ module spi_tb();
         .cs(cs), 
         .data_out(do));
 
-    spi_slave #(.F_SPI(1_000_000), .CPOL(1'b0), .CPHA(1'b1))
+    spi_slave #(.CPOL(1'b0), .CPHA(1'b1))
     slave_uut(
         .clk(clk),
         .rst(rst),
@@ -48,7 +48,7 @@ module spi_tb();
     initial begin
         // reset
         start = 0;
-        di = 8'b00101010;
+        di = 8'b00101011;
         rst = 1;
         #10
         rst = 0;

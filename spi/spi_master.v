@@ -37,69 +37,77 @@ module spi_master #(
     reg [7:0] di_latch;             // data in latch
 
     reg spi_en;                 // spi clock enable
-    reg next_en;                // bit counter enable
     wire sclk_edge;             // spi clock edge detection (transitions)
     wire done;                  // bit counter overflow
 
     wire [2:0] spi_bit;         // current bit
-    wire [4:0] edge_cnt;        // current count of clock edges
-    wire edge_rst;
-    reg edge_rst_reg;
+
+    reg first_edge;
+    reg [2:0] bit_cnt;          // current bit count
 
     mod #(.MOD(SPI_TICK)) spi_sclk_mod(.clk(clk), .rst(rst), .cen(spi_en), .sync_ovf(sclk_edge));
-    mod #(.MOD(8)) spi_bit_mod(.clk(clk), .rst(rst), .cen(next_en), .q(spi_bit), .sync_ovf(done));
-    mod #(.MOD(32)) spi_edge_mod(.clk(clk), .rst(edge_rst), .cen(sclk_edge), .q(edge_cnt));      // need >4 bits
     
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            // initialize master
+            // initialize master spi lines
             sclk_reg <= CPOL;
             mosi_reg <= 1'b0;
             cs_reg <= 1'b1;         // device not selected
             spi_en <= 1'b0;         // disable spi clock
+
+            // reset output registers
             do_reg <= 8'b0;
             do_latch <= 8'b0;
-            state <= STATE_IDLE;    // default idle state
 
+            first_edge <= 1'b1;     // first edge not yet detected
+            bit_cnt <= 3'b0;        // reset bit counter
+
+            state <= STATE_IDLE;    // default idle state
         end
         else begin
 
             case (state)
                 STATE_IDLE: begin
 
-                    next_en <= 1'b0;
+                    first_edge <= 1'b1;
+                    sclk_reg <= CPOL;       // clock idle
+                    spi_en <= 1'b0;         // disable spi clock
+                    cs_reg <= 1'b1;         // device not selected
+                    state <= STATE_IDLE;    // transition states
 
                     if (start) begin            // start transmission...
                         spi_en <= 1'b1;         // enable spi clock
                         cs_reg <= 1'b0;         // device selected
                         di_latch <= data_in;    // latch data
+                        bit_cnt <= 3'b0;        // reset counter
                         state <= STATE_BUSY;    // transition states
-                    end
-                    else begin
-                        
-                        sclk_reg <= CPOL;       // clock idle
-                        spi_en <= 1'b0;         // disable spi clock
-                        cs_reg <= 1'b1;         // device not selected
-                        state <= STATE_IDLE;    // transition states
                     end
                 end
                 STATE_BUSY: begin
+
+                    // default states
+                    sclk_reg <= sclk_reg;
+                    spi_en <= spi_en;
+                    cs_reg <= cs_reg;
+                    first_edge <= first_edge;
+                    bit_cnt <= bit_cnt;
+                    state <= state;
+
+                    if (sclk_edge)      sclk_reg <= ~sclk_reg;      // toggle clock on edge
+
+                    mosi_reg <= di_latch[3'b111 - bit_cnt];         // put current bit onto line (MSb first)
+
                     case (spi_mode)
-                        SPI_MODE0: begin        // data sample on rising edge and shifted on falling edge
-                            next_en <= 1'b0;
+                        SPI_MODE0, SPI_MODE3: begin        // data sample on rising edge and shifted on falling edge
 
-                            if (sclk_edge)      sclk_reg <= ~sclk_reg;      // toggle clock on edge
-                            else                sclk_reg <= sclk_reg;
+                            if (sclk_edge && sclk_reg && ~first_edge)   // if transitioning to falling edge and first rising edge has already been detected (SPI_MODE3)...
+                                bit_cnt <= bit_cnt + 3'b1;              // move to next bit
+                            else if (sclk_edge && ~sclk_reg) begin      // if transitioning to rising edge...
+                                do_reg <= {do_reg[6:0], miso};          // sample miso line
+                                first_edge <= 1'b0;                     // indicate rising edge has been seen
+                            end
 
-                            mosi_reg <= di_latch[3'b111 - spi_bit];         // put current bit onto line (MSb first)
-
-                            if (sclk_edge && sclk_reg)          // if transitioning to falling edge...
-                                next_en <= 1'b1;                // move to next bit
-                            else if (sclk_edge && ~sclk_reg)    // if transitioning to rising edge...
-                                do_reg <= {do_reg[6:0], miso};  // sample miso line
-
-
-                            if (done) begin             // when all bits have been exchanged
+                            if (bit_cnt == 3'b111 && sclk_edge && sclk_reg) begin  // when all bits have been exchanged
                                 sclk_reg <= CPOL;       // clock idle
                                 spi_en <= 1'b0;         // disable spi clock
                                 cs_reg <= 1'b1;         // deselect device
@@ -107,37 +115,22 @@ module spi_master #(
                                 state <= STATE_IDLE;    // idle
                             end
                         end
-                        SPI_MODE1: begin        // data sampled on falling edge and shifted on rising edge
+                        SPI_MODE1, SPI_MODE2: begin        // data sampled on falling edge and shifted on rising edge
                             
-                            edge_rst_reg <= 1'b0;
-                            next_en <= 1'b0;
-
-                            if (sclk_edge)      sclk_reg <= ~sclk_reg;      // toggle clock on edge
-                            else                sclk_reg <= sclk_reg;
-
-                            mosi_reg <= di_latch[3'b111 - spi_bit];         // put current bit onto line (MSb first)
-
-                            if (sclk_edge && sclk_reg)          // if transitioning to falling edge...
-                                do_reg <= {do_reg[6:0], miso};  // sample miso line
-                            else if (sclk_edge && ~sclk_reg && edge_cnt != 5'b0000)    // if transitioning to rising edge...
-                                next_en <= 1'b1;                // move to next bit (only when not first rising edge)
-
-                            if (edge_cnt == 5'b10000 && sclk_edge) begin
-
-                                edge_rst_reg <= 1'b1;   // reset clock edge counter
-                                sclk_reg <= CPOL;
-                                spi_en <= 1'b0;
-                                cs_reg <= 1'b1;
-                                do_latch <= do_reg;
-                                state <= STATE_IDLE;
+                            if (sclk_edge && sclk_reg) begin        // if transitioning to falling edge...
+                                do_reg <= {do_reg[6:0], miso};      // sample miso line
+                                first_edge <= 1'b0;                 // indicate falling edge has been seen
                             end
+                            else if (sclk_edge && ~sclk_reg && ~first_edge)     // if transitioning to rising edge and falling edge has already been detected (SPI_MODE1)......
+                                bit_cnt <= bit_cnt + 3'b1;                      // move to next bit (only when not first rising edge)
 
-                        end
-                        SPI_MODE2: begin        // data sampled on falling edge and shifted on rising edge
-
-                        end
-                        SPI_MODE3: begin        // data sampled on rising edge and shifted on falling edge
-
+                            if (bit_cnt == 3'b111 && sclk_edge && ~sclk_reg) begin  // when all bits have been exchanged
+                                sclk_reg <= CPOL;       // clock idle
+                                spi_en <= 1'b0;         // disable spi clock
+                                cs_reg <= 1'b1;         // deselect device
+                                do_latch <= do_reg;     // latch output data
+                                state <= STATE_IDLE;    // idle
+                            end
                         end
                     endcase
 
@@ -151,6 +144,5 @@ module spi_master #(
     assign mosi = mosi_reg;
     assign cs = cs_reg;
     assign data_out = do_latch;
-    assign edge_rst = edge_rst_reg | rst;
     assign spi_mode = {CPOL, CPHA};
 endmodule
