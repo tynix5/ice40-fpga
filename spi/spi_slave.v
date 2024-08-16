@@ -4,12 +4,12 @@ module spi_slave #(
     parameter CPOL = 1'b0,      // clock polarity
     parameter CPHA = 1'b0       // clock phase
 )(
-    input clk,
-    input rst,
-    input sclk,
-    input mosi,
-    input cs,
-    output miso
+    input clk,                  // clock
+    input rst,                  // reset
+    input sclk,                 // spi clock
+    input mosi,                 // spi mosi line
+    input cs,                   // chip select
+    output miso                 // spi miso line
 );
 
     // FSM states
