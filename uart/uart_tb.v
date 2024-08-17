@@ -1,4 +1,4 @@
-`timescale 100ps/10ps
+`timescale 1ns/10ps
 
 
 module uart_tb();
@@ -50,9 +50,9 @@ module uart_tb();
     always begin
 
         // 100 MHz
-        #50
+        #5
         clk = 1;
-        #50
+        #5
         clk = 0;
     end
 

@@ -1,4 +1,4 @@
-`timescale 100ps/100ps
+`timescale 1ns/100ps
 
 module spi_tb();
 
