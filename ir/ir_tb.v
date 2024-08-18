@@ -13,10 +13,10 @@ module ir_tb();
     localparam [7:0] ADDR = 8'b00010000;
     localparam [7:0] DATA = 8'b11011000;
 
-    reg [15:0] addr_burst = {ADDR, ADDR ^ {8{1'b1}}};
-    reg [15:0] data_burst = {DATA, DATA ^ {8{1'b1}}};
+    reg [15:0] addr_burst = {ADDR ^ {8{1'b1}}, ADDR};
+    reg [15:0] data_burst = {DATA ^ {8{1'b1}}, DATA};
 
-    ir_rcv ir_uut(.clk(clk), .rst(rst), .rcv(rcv), .burst(burst), .ready(rdy));
+    ir_rcv ir_uut(.clk(clk), .rst(rst), .ir_in(rcv), .burst(burst), .ready(rdy));
 
     initial begin
 
