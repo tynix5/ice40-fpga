@@ -55,21 +55,19 @@ module ir_rcv (
     localparam S_IDLE = 3'b000;         // idle
     localparam S_AGC = 3'b001;          // AGC burst 
     localparam S_SPACE = 3'b010;        // space between AGC burst and data
-    localparam S_DATA = 3'b011;
-    localparam S_DATA_CARRIER = 3'b011; // address + command carrier burst
-    localparam S_DATA_SPACE = 3'b100;   // address + command space
-    localparam S_DONE = 3'b101;         // done
+    localparam S_DATA = 3'b011;         // carrier burst + one/zero space
+    localparam S_DONE = 3'b100;         // done
 
-    reg [2:0] state;                        // FSM state register
+    reg [2:0] state;                    // FSM state register
 
-    reg [31:0] burst_latch, burst_reg;
-    reg [4:0] burst_cnt;
+    reg [31:0] burst_latch, burst_reg;  // address + cmd (+ inversion) registers  
+    reg [4:0] burst_cnt;                // burst bit pointer
 
-    reg [31:0] tim;
+    reg [31:0] tim;                     // timer
 
-    reg rdy_reg;
+    reg rdy_reg;                        // new data available
 
-    reg last_ir_in;
+    reg last_ir_in;                     // used for rising/falling edge detection
     wire ir_rising_edge, ir_falling_edge;
 
     always @(posedge clk or posedge rst) begin
@@ -77,7 +75,7 @@ module ir_rcv (
             last_ir_in <= 1'b1;
         end
         else begin
-            last_ir_in <= ir_in;
+            last_ir_in <= ir_in;        // update receiver state
         end
     end
 
@@ -89,19 +87,22 @@ module ir_rcv (
 
             case (state)
                 S_IDLE, S_DONE: begin
-                    tim <= 32'b0;
+                    tim <= 32'b0;       // reset timer
                 end
                 S_AGC: begin
+                    // count up until valid AGC burst detected
                     tim <= tim + 32'b1;
                     if (ir_rising_edge && tim >= AGC_BURST_MIN_CYCLES && tim <= AGC_BURST_MAX_CYCLES)
                         tim <= 32'b0;
                 end
                 S_SPACE: begin
+                    // count up until valid SPACE detected
                     tim <= tim + 32'b1;
                     if (ir_falling_edge && tim >= SPACE_MIN_CYCLES && tim <= SPACE_MAX_CYCLES)
                         tim <= 32'b0;
                 end
                 S_DATA: begin
+                    // count up until valid carrier burst received and valid 1/0 pulse period
                     tim <= tim + 32'b1;
 
                     if (ir_falling_edge && tim >= ZERO_PULSE_DISTANCE_MIN_CYCLES && tim <= ZERO_PULSE_DISTANCE_MAX_CYCLES)
@@ -120,9 +121,11 @@ module ir_rcv (
         else begin
             case (state)
                 S_IDLE, S_AGC, S_SPACE, S_DONE: begin
-                    burst_cnt <= 5'b0;
+                    // reset burst bit pointer
+                    burst_cnt <= 5'b0;      
                 end
                 S_DATA: begin
+                    // increment bit counter when next carrier burst is starting
                     burst_cnt <= burst_cnt;
 
                     if (ir_falling_edge)
@@ -142,11 +145,13 @@ module ir_rcv (
 
             case (state)
                 S_IDLE, S_AGC, S_SPACE: begin
+                    // data not ready, keep burst reg and latch the same for repeats
                     burst_reg <= burst_reg;
                     burst_latch <= burst_latch;
                     rdy_reg <= 1'b0;
                 end
                 S_DATA: begin
+                    // update burst reg when new valid 1/0 detected
                     burst_reg <= burst_reg;
                     burst_latch <= burst_latch;
                     rdy_reg <= 1'b0;
@@ -157,8 +162,9 @@ module ir_rcv (
                         burst_reg[burst_cnt] <= 1'b1;
                 end
                 S_DONE: begin
+                    // latch in received data and signal new data available
                     burst_reg <= burst_reg;
-                    burst_latch <= {burst_reg[7:0], burst_reg[15:8], burst_reg[23:16], burst_reg[31:24]};
+                    burst_latch <= {burst_reg[7:0], burst_reg[15:8], burst_reg[23:16], burst_reg[31:24]};   // lsb first
                     rdy_reg <= 1'b1;
                 end
             endcase
@@ -176,10 +182,12 @@ module ir_rcv (
 
             case (state)
                 S_IDLE: begin
-                    if (ir_falling_edge)
+                    // when AGC burst detected, move to AGC
+                    if (ir_falling_edge)        
                         state <= S_AGC;
                 end
                 S_AGC: begin
+                    // if AGC burst ends and valid, move to SPACE, else IDLE
                     if (ir_rising_edge) begin
                         if (tim >= AGC_BURST_MIN_CYCLES && tim <= AGC_BURST_MAX_CYCLES)
                             state <= S_SPACE;
@@ -188,21 +196,24 @@ module ir_rcv (
                     end
                 end
                 S_SPACE: begin
+                    // if first carrier burst starts and SPACE is valid, move to data, else IDLE
                     if (ir_falling_edge) begin
                         if (tim >= SPACE_MIN_CYCLES && tim <= SPACE_MAX_CYCLES)
-                            state <= S_DATA_CARRIER;
+                            state <= S_DATA;
                         else
                             state <= S_IDLE;
                     end
                 end
                 S_DATA: begin
+                    // if carrier burst is over and valid, wait in this state until next carrier burst starts to receive data
+                    // if burst counter is full, all bits have been received, move to DONE
                     state <= state;
 
                     if (ir_rising_edge) begin      // wait for 560us carrier burst to be over
                         if (!(tim >= CARRIER_MIN_CYCLES && tim <= CARRIER_MAX_CYCLES))
                             state <= S_IDLE;
                     end
-                    else if (ir_falling_edge) begin
+                    else if (ir_falling_edge) begin     // wait for next carrier burst to begin, then check previous space to determine '1' or '0' bit
                         if ((tim >= ZERO_PULSE_DISTANCE_MIN_CYCLES && tim <= ZERO_PULSE_DISTANCE_MAX_CYCLES) || (tim >= ONE_PULSE_DISTANCE_MIN_CYCLES && tim <= ONE_PULSE_DISTANCE_MAX_CYCLES)) begin
                             if (burst_cnt == 5'b11111)
                                 state <= S_DONE;
@@ -212,14 +223,15 @@ module ir_rcv (
                     end
                 end
                 S_DONE: begin
+                    // detect final carrier burst?
                     state <= S_IDLE;
                 end
             endcase
         end
     end
 
-    assign ir_rising_edge = (ir_in == 1'b1 && last_ir_in == 1'b0) ? 1'b1 : 1'b0;
-    assign ir_falling_edge = (ir_in == 1'b0 && last_ir_in == 1'b1) ? 1'b1 : 1'b0;
+    assign ir_rising_edge = (ir_in == 1'b1 && last_ir_in == 1'b0) ? 1'b1 : 1'b0;        // ir sensor rising edge
+    assign ir_falling_edge = (ir_in == 1'b0 && last_ir_in == 1'b1) ? 1'b1 : 1'b0;       // ir sensor falling edge
     assign burst = burst_latch;
     assign ready = rdy_reg;
 
