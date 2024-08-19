@@ -1,9 +1,0 @@
-
-set_io      clk         P7
-
-set_io      rst         G11
-
-set_io      led[0]      G14
-set_io      led[1]      F14
-set_io      led[2]      E12
-set_io      led[3]      E14
