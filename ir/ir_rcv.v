@@ -9,28 +9,9 @@ module ir_rcv (
 
     localparam F_CLK = 100_000_000;
 
-    /*********************************************************/
-    /***************** Testbench parameters ******************/
-    /*********************************************************/
-    // localparam AGC_BURST_CYCLES = 900;
-    // localparam AGC_BURST_MIN_CYCLES = 850;
-    // localparam AGC_BURST_MAX_CYCLES = 950;
-    // localparam SPACE_CYCLES = 450;
-    // localparam SPACE_MIN_CYCLES = 400;
-    // localparam SPACE_MAX_CYCLES = 500;
-    // localparam CARRIER_CYCLES = 56;
-    // localparam CARRIER_MIN_CYCLES = 51;
-    // localparam CARRIER_MAX_CYCLES = 61;
-    // localparam ONE_PULSE_DISTANCE_CYCLES = 225;
-    // localparam ONE_PULSE_DISTANCE_MIN_CYCLES = 200;
-    // localparam ONE_PULSE_DISTANCE_MAX_CYCLES = 250;
-    // localparam ZERO_PULSE_DISTANCE_CYCLES = 112;
-    // localparam ZERO_PULSE_DISTANCE_MIN_CYCLES = 87;
-    // localparam ZERO_PULSE_DISTANCE_MAX_CYCLES = 137;
-    /*********************************************************/
-    /*********************************************************/
-    /*********************************************************/
-
+    /***********************************************************/
+    /***************** NEC Timing Protocol *********************/
+    /***********************************************************/
     localparam [31:0]  AGC_BURST_MS = 9;
     localparam [31:0]  AGC_BURST_MIN_CYCLES = 850_000;
     localparam [31:0]  AGC_BURST_MAX_CYCLES = 950_000;
@@ -51,6 +32,11 @@ module ir_rcv (
     localparam [31:0]  ZERO_PULSE_DISTANCE_MIN_CYCLES = 87_000;
     localparam [31:0]  ZERO_PULSE_DISTANCE_MAX_CYCLES = 137_000;
 
+    localparam [31:0]  TIMEOUT = 1_000_000;     // 10ms
+    /***********************************************************/
+    /***********************************************************/
+    /***********************************************************/
+
     // FSM states
     localparam S_IDLE = 3'b000;         // idle
     localparam S_AGC = 3'b001;          // AGC burst 
@@ -67,17 +53,8 @@ module ir_rcv (
 
     reg rdy_reg;                        // new data available
 
-    reg last_ir_in;                     // used for rising/falling edge detection
     wire ir_rising_edge, ir_falling_edge;
-
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            last_ir_in <= 1'b1;
-        end
-        else begin
-            last_ir_in <= ir_in;        // update receiver state
-        end
-    end
+    synchronizer #(.SYNC_STAGES(2)) ir_rcv_synch(.clk(clk), .rst(rst), .async_in(ir_in), .rise_edge_tick(ir_rising_edge), .fall_edge_tick(ir_falling_edge));
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -194,6 +171,8 @@ module ir_rcv (
                         else
                             state <= S_IDLE;
                     end
+                    else if (tim >= TIMEOUT)
+                        state <= S_IDLE;
                 end
                 S_SPACE: begin
                     // if first carrier burst starts and SPACE is valid, move to data, else IDLE
@@ -203,6 +182,8 @@ module ir_rcv (
                         else
                             state <= S_IDLE;
                     end
+                    else if (tim >= TIMEOUT)
+                        state <= S_IDLE;
                 end
                 S_DATA: begin
                     // if carrier burst is over and valid, wait in this state until next carrier burst starts to receive data
@@ -221,6 +202,8 @@ module ir_rcv (
                         else
                             state <= S_IDLE;
                     end
+                    else if (tim >= TIMEOUT)
+                        state <= S_IDLE;
                 end
                 S_DONE: begin
                     // detect final carrier burst?
@@ -230,8 +213,6 @@ module ir_rcv (
         end
     end
 
-    assign ir_rising_edge = (ir_in == 1'b1 && last_ir_in == 1'b0) ? 1'b1 : 1'b0;        // ir sensor rising edge
-    assign ir_falling_edge = (ir_in == 1'b0 && last_ir_in == 1'b1) ? 1'b1 : 1'b0;       // ir sensor falling edge
     assign burst = burst_latch;
     assign ready = rdy_reg;
 

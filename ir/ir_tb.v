@@ -2,7 +2,7 @@
 
 module ir_tb();
 
-    localparam DURATION = 1500000000;
+    localparam DURATION = 70000000;         // 70ms
 
     reg clk, rst, rcv;
 

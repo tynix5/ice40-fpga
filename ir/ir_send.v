@@ -9,13 +9,18 @@ module ir_send(
 );
 
 
-    // Frame lengths
+    /***********************************************************/
+    /***************** NEC Timing Protocol *********************/
+    /***********************************************************/
     localparam AGC_BURST_CYCLES = 900_000;  // 9ms
     localparam SPACE_CYCLES = 450_000;      // 4.5ms
     localparam CARRIER_CYCLES = 56_000;     // 560us
     localparam ONE_PERIOD = 225_000;        // 2.25ms
     localparam ZERO_PERIOD = 112_500;       // 1.125ms
     localparam CARRIER_FREQ = 38_000;       // 38 kHz
+    /***********************************************************/
+    /***********************************************************/
+    /***********************************************************/
 
     // FSM states
     localparam S_IDLE = 3'b000;
