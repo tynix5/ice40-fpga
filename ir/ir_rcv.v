@@ -186,7 +186,7 @@ module ir_rcv (
                         state <= S_IDLE;
                 end
                 S_DATA: begin
-                    // if carrier burst is over and valid, wait in this state until next carrier burst starts to receive data
+                    // if carrier burst is over and valid, wait in this state until next carrier burst starts in order to receive data
                     // if burst counter is full, all bits have been received, move to DONE
                     state <= state;
 
@@ -206,7 +206,7 @@ module ir_rcv (
                         state <= S_IDLE;
                 end
                 S_DONE: begin
-                    // detect final carrier burst?
+                    // idle after final carrier burst
                     state <= S_IDLE;
                 end
             endcase

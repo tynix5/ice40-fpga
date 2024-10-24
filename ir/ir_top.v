@@ -21,14 +21,14 @@ module ir_top(
     wire send;
     wire [7:0] cmd;
     reg [7:0] cmd_reg;
-    ir_send ir_tx(.clk(clk), .rst(rst), .addr(8'h10), .cmd(cmd), .ir_en(send), .ir_led(ir_led));
+    ir_send ir_tx(.clk(clk), .rst(rst), .addr(8'h10), .cmd(cmd), .ir_send(send), .ir_led(ir_led));
 
     reg [7:0] led_reg;
     reg [31:0] tim;
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            send_reg <= 1'b0;
+            send_reg <= 1'b0;                                                                                                                                                                 
             led_reg <= 8'b0;
             tim <= 32'b0;
             cmd_reg <= 8'b1;

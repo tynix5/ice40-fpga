@@ -2,7 +2,7 @@
 
 module ir_tb();
 
-    localparam DURATION = 70000000;         // 70ms
+    localparam DURATION = 300000000;         // 300ms
 
     reg clk, rst, rcv;
 
@@ -21,7 +21,7 @@ module ir_tb();
 
     // simulate receiever and sender communication
     ir_rcv ir_uut(.clk(clk), .rst(rst), .ir_in(rcv), .burst(burst), .ready(rdy));
-    ir_send ir_send_uut(.clk(clk), .rst(rst), .addr(ADDR), .cmd(DATA), .ir_en(ir_en), .ir_led(ir_out));
+    ir_send ir_send_uut(.clk(clk), .rst(rst), .addr(ADDR), .cmd(DATA), .ir_send(ir_en), .ir_led(ir_out));
 
     initial begin
 
@@ -53,43 +53,46 @@ module ir_tb();
 
     always begin
 
-        ir_en = 0;
-        rcv = 1;
-        @(negedge rst);
-        #10
-        ir_en = 1;  // start transmitter
+        ir_en = 1'b1;
+        #10;
 
-        // AGC burst with space
-        rcv = 0;
-        #9000000
-        rcv = 1;
-        #4500000
+        // ir_en = 0;
+        // rcv = 1;
+        // @(negedge rst);
+        // #10
+        // ir_en = 1;  // start transmitter
 
-        // address
-        i = 0;
-        repeat(16) begin
-            rcv = 0;
-            #560000
-            rcv = 1;
-            if (addr_burst[i]) #1690000;
-            else #560000;
-            i = i + 1;
-        end
+        // // AGC burst with space
+        // rcv = 0;
+        // #9000000
+        // rcv = 1;
+        // #4500000
 
-        // data
-        i = 0;
-        repeat(16) begin
-            rcv = 0;
-            #560000
-            rcv = 1;
-            if (data_burst[i]) #1690000;
-            else #560000;
-            i = i + 1;
-        end
+        // // address
+        // i = 0;
+        // repeat(16) begin
+        //     rcv = 0;
+        //     #560000
+        //     rcv = 1;
+        //     if (addr_burst[i]) #1690000;
+        //     else #560000;
+        //     i = i + 1;
+        // end
 
-        rcv = 0;
-        #560000      // final carrier burst to determine last bit
-        rcv = 1;
+        // // data
+        // i = 0;
+        // repeat(16) begin
+        //     rcv = 0;
+        //     #560000
+        //     rcv = 1;
+        //     if (data_burst[i]) #1690000;
+        //     else #560000;
+        //     i = i + 1;
+        // end
+
+        // rcv = 0;
+        // #560000      // final carrier burst to determine last bit
+        // rcv = 1;
     end
 
 endmodule
