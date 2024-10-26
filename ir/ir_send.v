@@ -78,7 +78,7 @@ module ir_send(
             else begin
 
                 hold_tim <= hold_tim + 24'b1;            // increment while send is held
-                if (hold_tim == REPEAT_PERIOD) begin     // if timer is held enough for a repeat
+                if (hold_tim == REPEAT_PERIOD) begin     // if send is held enough for a repeat
                     ir_send_repeat <= 1'b1;
                     hold_tim <= 24'b0;
                 end

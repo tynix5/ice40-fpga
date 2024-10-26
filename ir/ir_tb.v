@@ -53,46 +53,55 @@ module ir_tb();
 
     always begin
 
-        ir_en = 1'b1;
-        #10;
+        // ir_en = 1'b1;
+        // #10;
 
-        // ir_en = 0;
-        // rcv = 1;
-        // @(negedge rst);
-        // #10
-        // ir_en = 1;  // start transmitter
+        ir_en = 0;
+        rcv = 1;
+        @(negedge rst);
+        #10
+        ir_en = 1;  // start transmitter
 
-        // // AGC burst with space
-        // rcv = 0;
-        // #9000000
-        // rcv = 1;
-        // #4500000
+        // AGC burst with space
+        rcv = 0;
+        #9000000
+        rcv = 1;
+        #4500000
 
-        // // address
-        // i = 0;
-        // repeat(16) begin
-        //     rcv = 0;
-        //     #560000
-        //     rcv = 1;
-        //     if (addr_burst[i]) #1690000;
-        //     else #560000;
-        //     i = i + 1;
-        // end
+        // address
+        i = 0;
+        repeat(16) begin
+            rcv = 0;
+            #560000
+            rcv = 1;
+            if (addr_burst[i]) #1690000;
+            else #560000;
+            i = i + 1;
+        end
 
-        // // data
-        // i = 0;
-        // repeat(16) begin
-        //     rcv = 0;
-        //     #560000
-        //     rcv = 1;
-        //     if (data_burst[i]) #1690000;
-        //     else #560000;
-        //     i = i + 1;
-        // end
+        // data
+        i = 0;
+        repeat(16) begin
+            rcv = 0;
+            #560000
+            rcv = 1;
+            if (data_burst[i]) #1690000;
+            else #560000;
+            i = i + 1;
+        end
 
-        // rcv = 0;
-        // #560000      // final carrier burst to determine last bit
-        // rcv = 1;
+        rcv = 0;
+        #560000      // final carrier burst to determine last bit
+        rcv = 1;
+
+        #110000000      // delay for 110ms to simulate repeat
+        rcv = 0;
+        #9000000        // AGC burst
+        rcv = 1;
+        #2250000        // repeat space
+        rcv = 0;
+        #560000         // carrier burst
+        rcv = 1;
     end
 
 endmodule

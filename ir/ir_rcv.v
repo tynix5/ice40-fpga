@@ -20,6 +20,10 @@ module ir_rcv (
     localparam [31:0]  SPACE_MIN_CYCLES = 400_000;
     localparam [31:0]  SPACE_MAX_CYCLES = 500_000;
 
+    localparam [31:0]  REPEAT_SPACE_MS = 2.25;
+    localparam [31:0]  REPEAT_SPACE_MIN_CYCLES = 175_000;
+    localparam [31:0]  REPEAT_SPACE_MAX_CYCLES = 275_000;
+
     localparam [31:0]  CARRIER_US = 560;
     localparam [31:0]  CARRIER_MIN_CYCLES = 51_000;
     localparam [31:0]  CARRIER_MAX_CYCLES = 61_000;
@@ -76,6 +80,8 @@ module ir_rcv (
                     // count up until valid SPACE detected
                     tim <= tim + 32'b1;
                     if (ir_falling_edge && tim >= SPACE_MIN_CYCLES && tim <= SPACE_MAX_CYCLES)
+                        tim <= 32'b0;
+                    else if (ir_falling_edge && tim >= REPEAT_SPACE_MIN_CYCLES && tim <= REPEAT_SPACE_MAX_CYCLES)       // repeat space is 110ms
                         tim <= 32'b0;
                 end
                 S_DATA: begin
@@ -175,10 +181,12 @@ module ir_rcv (
                         state <= S_IDLE;
                 end
                 S_SPACE: begin
-                    // if first carrier burst starts and SPACE is valid, move to data, else IDLE
+                    // if first carrier burst starts and SPACE is valid, move to data (or done for repeat), else IDLE
                     if (ir_falling_edge) begin
                         if (tim >= SPACE_MIN_CYCLES && tim <= SPACE_MAX_CYCLES)
                             state <= S_DATA;
+                        else if (tim >= REPEAT_SPACE_MIN_CYCLES && tim <= REPEAT_SPACE_MAX_CYCLES)      // if repeat, signal ready and done
+                            state <= S_DONE;
                         else
                             state <= S_IDLE;
                     end
