@@ -81,7 +81,7 @@ module ir_rcv (
                     tim <= tim + 32'b1;
                     if (ir_falling_edge && tim >= SPACE_MIN_CYCLES && tim <= SPACE_MAX_CYCLES)
                         tim <= 32'b0;
-                    else if (ir_falling_edge && tim >= REPEAT_SPACE_MIN_CYCLES && tim <= REPEAT_SPACE_MAX_CYCLES)       // repeat space is 110ms
+                    else if (ir_falling_edge && tim >= REPEAT_SPACE_MIN_CYCLES && tim <= REPEAT_SPACE_MAX_CYCLES)       // repeat space is 2.25ms
                         tim <= 32'b0;
                 end
                 S_DATA: begin
