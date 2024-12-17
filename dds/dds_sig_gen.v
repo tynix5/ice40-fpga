@@ -28,7 +28,7 @@ module dds_sig_gen #(
 
         if (rst) begin
             phase_acc <= 32'b0;         // reset at beginning of sine wave
-            phase_step <= 32'h100;      // step size is proportional to output frequency
+            phase_step <= 32'h100000;      // step size is proportional to output frequency
 
             dac_raw <= 'b0;
         end
@@ -43,7 +43,7 @@ module dds_sig_gen #(
     assign sine_axis = phase_acc[30];
 
     assign phase_angle = sine_axis ? (8'hff - phase_acc[29:22]) : (phase_acc[29:22]);
-    assign dac_out = sine_sign ? (10'h3ff - dac_raw) : (dac_raw);
+    assign dac_out = sine_sign ? (10'h3ff - dac_raw) : dac_raw;
 
 
 endmodule

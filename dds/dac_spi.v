@@ -9,14 +9,15 @@ module dac_spi #(
     input [15:0] data,
     output sclk,
     output mosi,
-    output cs
+    output cs,
+    output done
 );
 
     localparam F_CLK = 100_000_000;
     localparam SPI_TICK = F_CLK / F_SPI / 2;        // frequency spi clock should be toggled
 
     reg spi_state;
-    reg sclk_reg, mosi_reg, cs_reg;
+    reg sclk_reg, mosi_reg, cs_reg, done_reg;
 
     reg spi_en;
     reg [3:0] data_bit;
@@ -39,6 +40,7 @@ module dac_spi #(
             cs_reg <= 1'b1;         // device inactive
 
             spi_en <= 1'b0;
+            done_reg <= 1'b0;
 
         end
         else begin
@@ -52,6 +54,7 @@ module dac_spi #(
                     cs_reg <= 1'b1;
 
                     spi_en <= 1'b0;
+                    done_reg <= 1'b0;
 
                     if (start) begin
                         cs_reg <= 1'b0;         // activate slave
@@ -69,8 +72,10 @@ module dac_spi #(
                         if (sclk_reg) begin            // falling edge, set up new data
                             data_bit <= data_bit + 4'b1;
 
-                            if (data_bit == 4'b1111)    // if all data has been sent, idle
+                            if (data_bit == 4'b1111) begin    // if all data has been sent, idle
+                                done_reg <= 1'b1;
                                 spi_state <= S_IDLE;
+                            end
                         end
                     end
 
@@ -86,5 +91,6 @@ module dac_spi #(
     assign sclk = sclk_reg;
     assign mosi = mosi_reg;
     assign cs = cs_reg;
+    assign done = done_reg;
 
 endmodule

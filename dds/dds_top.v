@@ -10,40 +10,35 @@ module dds_top (
     wire rst, rst_n_sync;
     synchronizer rst_synch(.clk(clk), .rst(1'b0), .async_in(rst_n), .sync_out(rst_n_sync));
 
-    reg start;
-    wire [15:0] data;
-    reg [9:0] dac_data;
+    wire start, done;
+    wire [15:0] spi_data;        // raw SPI data sent to DAC
+    wire [9:0] dac_in;           // 10-bit DAC value
+    reg [4:0] start_delay;       // delay from last SPI transaction complete to start of next transaction (5 clock cycles) --> DAC needs at least 15ns
 
-    dac_spi #(.F_SPI(10_000_000)) spi_uut(.clk(clk), .rst(rst), .start(start), .data(data), .sclk(sclk), .mosi(mosi), .cs(cs));
-    // dds_sig_gen sin_wave(.clk(clk), .rst(rst), .dac_out)
+    dac_spi #(.F_SPI(10_000_000)) spi_uut(.clk(clk), .rst(rst), .start(start), .data(spi_data), .sclk(sclk), .mosi(mosi), .cs(cs), .done(done));
+    dds_sig_gen sin_wave(.clk(clk), .rst(rst), .dac_out(dac_in));
 
-    reg [31:0] timer, timer2;
+    integer i;
 
     always @(posedge clk or posedge rst) begin
 
         if (rst) begin
-            timer <= 32'b0;
-            timer2 <= 32'b0;
-            dac_data <= 10'b0;
+            start_delay <= 5'b00001;        // start first transaction 5 clock cycles after reset
         end
         else begin
-            timer <= timer + 32'b1;
-            timer2 <= timer2 + 32'b1;
-            start <= 1'b0;
+            
+            if (done)   start_delay[0] <= 1'b1;         // load enable for next transaction
+            else        start_delay[0] <= 1'b0;
 
-            if (timer == 50) begin
+            // shift start down pipeline
+            for (i = 1; i < 5; i = i + 1)
+                start_delay[i] <= start_delay[i-1];
 
-                start <= 1'b1;
-                timer <= 32'b0;
-            end
-
-            if (timer2 == 500) begin
-                dac_data <= dac_data + 10'b1;
-                timer2 <= 32'b0;
-            end
         end
     end
 
     assign rst = ~rst_n_sync;
-    assign data = {4'b0001, dac_data, 2'b00};
+    assign start = start_delay[4];
+    assign spi_data = {4'b0001, dac_in, 2'b00};
+    
 endmodule
