@@ -1,0 +1,6 @@
+set_io      clk                 P7
+set_io      rst_n               P8
+
+set_io      sclk                N1
+set_io      mosi                K3
+set_io      cs                  H1
