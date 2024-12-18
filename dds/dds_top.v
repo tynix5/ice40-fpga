@@ -15,7 +15,18 @@ module dds_top (
     wire [9:0] dac_in;           // 10-bit DAC value
     reg [4:0] start_delay;       // delay from last SPI transaction complete to start of next transaction (5 clock cycles) --> DAC needs at least 15ns
 
-    dac_spi #(.F_SPI(10_000_000)) spi_uut(.clk(clk), .rst(rst), .start(start), .data(spi_data), .sclk(sclk), .mosi(mosi), .cs(cs), .done(done));
+    spi_master #(.F_SPI(10_000_000), .CPOL(1'b0), .CPHA(1'b0), .N(16)) dac_spi(
+        .clk(clk), 
+        .rst(rst), 
+        .start(start), 
+        .data_in(spi_data), 
+        .miso(1'b0), 
+        .sclk(sclk), 
+        .mosi(mosi), 
+        .cs(cs), 
+        .done(done),
+        .data_out());
+
     dds_sig_gen sin_wave(.clk(clk), .rst(rst), .dac_out(dac_in));
 
     integer i;
@@ -40,5 +51,5 @@ module dds_top (
     assign rst = ~rst_n_sync;
     assign start = start_delay[4];
     assign spi_data = {4'b0001, dac_in, 2'b00};
-    
+
 endmodule
