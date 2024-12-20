@@ -7,6 +7,13 @@ module dds_top (
     output cs
 );
 
+    localparam DAC_CHANNEL_A = 4'b0000;
+    localparam DAC_CHANNEL_B = 4'b1000;
+    localparam DAC_GAIN_1X = 4'b0010;
+    localparam DAC_GAIN_2X = 4'b0000;
+    localparam DAC_SHUTDOWN = 4'b0000;
+    localparam DAC_ON = 4'b0001;
+
     wire rst, rst_n_sync;
     synchronizer rst_synch(.clk(clk), .rst(1'b0), .async_in(rst_n), .sync_out(rst_n_sync));
 
@@ -27,7 +34,12 @@ module dds_top (
         .done(done),
         .data_out());
 
-    dds_sig_gen sin_wave(.clk(clk), .rst(rst), .dac_out(dac_in));
+
+    reg dac_channel;
+    wire [9:0] dac_in_sin, dac_in_basic;
+
+    dds_sin_gen sin_wave(.clk(clk), .rst(rst), .dac_out(dac_in_sin));       // output on channel A
+    dds_basic_gen basic_wave(.clk(clk), .rst(rst), .dac_out_square(dac_in_basic));      // output on channel B
 
     integer i;
 
@@ -35,11 +47,16 @@ module dds_top (
 
         if (rst) begin
             start_delay <= 5'b00001;        // start first transaction 5 clock cycles after reset
+            dac_channel <= 1'b0;
         end
         else begin
             
-            if (done)   start_delay[0] <= 1'b1;         // load enable for next transaction
-            else        start_delay[0] <= 1'b0;
+            if (done) begin
+                start_delay[0] <= 1'b1;         // load enable for next transaction
+                dac_channel <= ~dac_channel;    // switch channels
+            end
+            else        
+                start_delay[0] <= 1'b0;
 
             // shift start down pipeline
             for (i = 1; i < 5; i = i + 1)
@@ -50,6 +67,6 @@ module dds_top (
 
     assign rst = ~rst_n_sync;
     assign start = start_delay[4];
-    assign spi_data = {4'b0001, dac_in, 2'b00};
+    assign spi_data = dac_channel ? {DAC_CHANNEL_A | DAC_GAIN_2X | DAC_ON, dac_in_sin, 2'b00} : {DAC_CHANNEL_B | DAC_GAIN_2X | DAC_ON, dac_in_basic, 2'b00};
 
 endmodule

@@ -6,7 +6,7 @@ module dds_tb();
     reg clk, rst;
     wire [9:0] dac_out;
 
-    dds_sig_gen dds_uut(.clk(clk), .rst(rst), .dac_out(dac_out));
+    dds_sin_gen dds_uut(.clk(clk), .rst(rst), .dac_out(dac_out));
 
     localparam DURATION = 100000;
 
