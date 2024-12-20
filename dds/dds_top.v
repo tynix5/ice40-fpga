@@ -7,12 +7,14 @@ module dds_top (
     output cs
 );
 
+    /************* MCP4012 DAC commands *****************/
     localparam DAC_CHANNEL_A = 4'b0000;
     localparam DAC_CHANNEL_B = 4'b1000;
     localparam DAC_GAIN_1X = 4'b0010;
     localparam DAC_GAIN_2X = 4'b0000;
     localparam DAC_SHUTDOWN = 4'b0000;
     localparam DAC_ON = 4'b0001;
+    /****************************************************/
 
     wire rst, rst_n_sync;
     synchronizer rst_synch(.clk(clk), .rst(1'b0), .async_in(rst_n), .sync_out(rst_n_sync));
@@ -67,6 +69,7 @@ module dds_top (
 
     assign rst = ~rst_n_sync;
     assign start = start_delay[4];
+    // select spi burst based on current channel
     assign spi_data = dac_channel ? {DAC_CHANNEL_A | DAC_GAIN_2X | DAC_ON, dac_in_sin, 2'b00} : {DAC_CHANNEL_B | DAC_GAIN_2X | DAC_ON, dac_in_basic, 2'b00};
 
 endmodule

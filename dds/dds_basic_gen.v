@@ -24,8 +24,8 @@ module dds_basic_gen(
         end
     end
 
-assign dac_out_tri = phase_acc[15] ? ~phase_acc[14:5] : phase_acc[14:5];
-assign dac_out_saw = phase_acc[14:5];
-assign dac_out_square = {10{phase_acc[15]}};
+assign dac_out_tri = phase_acc[15] ? ~phase_acc[14:5] : phase_acc[14:5];    // increment, then decrement
+assign dac_out_saw = phase_acc[14:5];   // increment, then fall
+assign dac_out_square = {10{phase_acc[15]}};        // binary state
 
 endmodule
