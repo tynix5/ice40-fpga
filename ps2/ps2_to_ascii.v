@@ -2,7 +2,7 @@ module ps2_to_ascii(
 
     input [7:0] char_in,
     input shift,
-    output [7:0] ascii
+    output reg [7:0] ascii
 );
 
     always @(*) begin

@@ -18,15 +18,16 @@ module ps2_handler(
     reg case_shift;         // is shift key being held
     reg wr_buff;
 
-    fifo #(.D_WIDTH(8), .A_WIDTH(5)) char_buff(.clk(clk), .rst(rst), .wr(wr_buff), .rd(rd), .w_data(ascii_char), .empty(empty), .full(full), .r_data(ascii));      // character buffer after processing (32 bytes x 1 byte)
 
     reg prev;
     wire [7:0] ps2_char;
     wire [7:0] ascii_char;
     wire rdy;
 
-    ps2_dev_to_host(.clk(clk), .rst(rst), .ps2_clk(ps2_clk), .ps2_data(ps2_data), .data(ps2_char), .rdy(rdy));          // PS/2 keyboard protocol handler
-    ps2_to_ascii(.char_in(ps2_char), .shift(case_shift), .ascii(ascii_char));       // conversion table
+    fifo #(.D_WIDTH(8), .A_WIDTH(5)) char_buff(.clk(clk), .rst(rst), .wr(wr_buff), .rd(rd), .w_data(ascii_char), .empty(empty), .full(full), .r_data(ascii));      // character buffer after processing (32 bytes x 1 byte)
+
+    ps2_dev_to_host ps2_module(.clk(clk), .rst(rst), .ps2_clk(ps2_clk), .ps2_data(ps2_data), .data(ps2_char), .rdy(rdy));          // PS/2 keyboard protocol handler
+    ps2_to_ascii conversion_table(.char_in(ps2_char), .shift(case_shift), .ascii(ascii_char));
 
     always @(posedge clk or posedge rst) begin
 
@@ -41,9 +42,9 @@ module ps2_handler(
 
             if (rdy) begin      // new data received
 
-                prev <= data;   // save data
+                prev <= ps2_char;   // save data
 
-                if (data == LEFT_SHIFT || data == RIGHT_SHIFT || data == CAPS_LOCK) begin       // if key results in a shift
+                if (ps2_char == LEFT_SHIFT || ps2_char == RIGHT_SHIFT || ps2_char == CAPS_LOCK) begin       // if key results in a shift
 
                     if (prev == BREAK)      
                         case_shift <= 1'b0;     // clear shift if key was released
@@ -52,7 +53,7 @@ module ps2_handler(
                 end
                 else begin
 
-                    if (prev != BREAK && data != BREAK)      // if key was pressed or held down
+                    if (prev != BREAK && ps2_char != BREAK)      // if key was pressed or held down
                         wr_buff <= 1'b1;        // write converted PS/2 to ASCII character to buffer
                 end
             end
