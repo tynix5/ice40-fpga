@@ -10,7 +10,7 @@ module ps2_tb();
     wire [7:0] data;
     wire done;
 
-    ps2_dev_to_host ps2_uut(.clk(clk), .rst(rst), .ps2_clk(ps2_clk), .ps2_data(ps2_data), .data(data), .ready(done));
+    ps2_dev_to_host ps2_uut(.clk(clk), .rst(rst), .ps2_clk(ps2_clk), .ps2_data(ps2_data), .data(data), .rdy(done));
 
     initial begin
 

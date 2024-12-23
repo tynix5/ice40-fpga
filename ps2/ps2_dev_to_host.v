@@ -5,7 +5,7 @@ module ps2_dev_to_host(
     input ps2_clk,
     input ps2_data,
     output [7:0] data,
-    output ready
+    output rdy
 );
 
     localparam F_CLK = 100_000_000;
@@ -32,6 +32,7 @@ module ps2_dev_to_host(
     wire ps2_data_sync;
     wire ps2_clk_rising_edge, ps2_clk_falling_edge;
 
+    // synchronize ps/2 clock signal
     synchronizer #(.SYNC_STAGES(2)) ps2_clk_synch(
         .clk(clk), 
         .rst(rst), 
@@ -40,6 +41,7 @@ module ps2_dev_to_host(
         .fall_edge_tick(ps2_clk_falling_edge), 
         .sync_out());
 
+    // synchronize ps/2 data signal
     synchronizer #(.SYNC_STAGES(2)) ps2_data_synch(
         .clk(clk), 
         .rst(rst), 

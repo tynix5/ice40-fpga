@@ -7,7 +7,7 @@ module dds_top (
     output cs
 );
 
-    /************* MCP4012 DAC commands *****************/
+    /************* MCP4812 DAC commands *****************/
     localparam DAC_CHANNEL_A = 4'b0000;
     localparam DAC_CHANNEL_B = 4'b1000;
     localparam DAC_GAIN_1X = 4'b0010;
