@@ -34,12 +34,12 @@ module fifo #(
             // on reset, reinitiliaze buffer
             w_ptr <= 0;
             r_ptr <= 0;
-            w_ptr_next <= 0;
-            r_ptr_next <= 0;
+            // w_ptr_next <= 0;
+            // r_ptr_next <= 0;
             empty_reg <= 1'b1;
             full_reg <= 1'b0;
-            full_next <= 1'b0;
-            empty_next <= 1'b1;
+            // full_next <= 1'b0;
+            // empty_next <= 1'b1;
         end
         else begin
             // assign new state to current state
@@ -49,10 +49,6 @@ module fifo #(
             empty_reg <= empty_next;
         end
     end
-
-
-    assign r_data = buff[r_ptr];        // write buffer contents out continuously
-
 
     always @(posedge clk) begin
 
