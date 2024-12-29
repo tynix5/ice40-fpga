@@ -122,6 +122,6 @@ module ps2_dev_to_host(
     end
 
     assign data = data_reg;
-    assign ready = ready_reg;
+    assign rdy = ready_reg;
 
 endmodule

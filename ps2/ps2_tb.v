@@ -2,15 +2,16 @@
 
 module ps2_tb();
 
-    localparam DURATION = 2000000;
+    localparam DURATION = 10000000;
     localparam PS2_CLK_HL_PER = 50 * 1000;       // 50us clock high/low period
     localparam TIMEOUT_TICKS = 125 * 1000;
 
-    reg clk, rst, ps2_clk, ps2_data;
+    reg clk, rst_n, ps2_clk, ps2_data;
     wire [7:0] data;
-    wire done;
+    wire done, tx;
 
-    ps2_dev_to_host ps2_uut(.clk(clk), .rst(rst), .ps2_clk(ps2_clk), .ps2_data(ps2_data), .data(data), .rdy(done));
+    // ps2_dev_to_host ps2_uut(.clk(clk), .rst(rst), .ps2_clk(ps2_clk), .ps2_data(ps2_data), .data(data), .rdy(done));
+    ps2_top ps2_uut(.clk(clk), .rst_n(rst_n), .ps2_c(ps2_clk), .ps2_d(ps2_data), .tx(tx));
 
     initial begin
 
@@ -25,10 +26,9 @@ module ps2_tb();
 
     initial begin
 
-        #1
-        rst = 1;
-        #1
-        rst = 0;
+        rst_n = 0;
+        #20
+        rst_n = 1;
     end
 
     always begin
@@ -41,6 +41,7 @@ module ps2_tb();
 
     always begin
         
+        #10
         ps2_data = 0;
         ps2_clk = 1;
         #20
@@ -75,6 +76,13 @@ module ps2_tb();
         ps2_clk = 0;
         ps2_data = 0;
         #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
         // 1
         ps2_clk = 1;
         ps2_data = 1;
@@ -102,6 +110,82 @@ module ps2_tb();
         #PS2_CLK_HL_PER;
         ps2_clk = 0;
         ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0 (parity)
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 1 stop
+        ps2_clk = 1;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+
+        // idle
+        ps2_clk = 1;
+        ps2_data = 1;
+
+        // send key break
+        #500000;
+        // start
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+
+        // data
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 1
+        ps2_clk = 1;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 1;
         #PS2_CLK_HL_PER;
         // 1
         ps2_clk = 1;
@@ -138,6 +222,94 @@ module ps2_tb();
         ps2_clk = 0;
         ps2_data = 1;
         #PS2_CLK_HL_PER;
+
+        // idle
+        ps2_clk = 1;
+        ps2_data = 1;
+
+        #500000;
+        // start
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+
+        // data
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 1
+        ps2_clk = 1;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        // 1
+        ps2_clk = 1;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        // 1
+        ps2_clk = 1;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 0 (parity)
+        ps2_clk = 1;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 0;
+        #PS2_CLK_HL_PER;
+        // 1 stop
+        ps2_clk = 1;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+        ps2_clk = 0;
+        ps2_data = 1;
+        #PS2_CLK_HL_PER;
+
+        // idle
+        ps2_clk = 1;
+        ps2_data = 1;
+
+        #500000;
 
     end
 
