@@ -43,88 +43,22 @@ wire out;
         rst = 1'b0;
     end
 
-
+    always begin
+        #5
+        clk = 0;
+        #5
+        clk = 1;
+    end
     
     always begin
 
-        #10
+        w_data = 8'hff;
+        rd = 0;
         wr = 1;
-        w_data = 8'h55;     // 0x55
-        clk = 1;
-        #1
-        clk = 0;
-        w_data = 8'h01;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        w_data = 8'h02;     // 0x02
-        #1
-        clk = 1;
-        #1
-        clk = 0;
+        #75
         wr = 0;
         rd = 1;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        rd = 1;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        rd = 0;
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        // #5
-        
-        /*
-        #10
-        wr = 1;
-        w_data = 8'h55;     // 0x55
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        #1
-        clk = 1;
-        #1
-        clk = 0;
-        */
+        #75;
     end
 
 endmodule

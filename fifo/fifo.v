@@ -28,18 +28,22 @@ module fifo #(
 
     assign r_data = buff[r_ptr];        // write buffer contents out continuously
 
+    wire wr_en;
+    assign wr_en = wr & ~full_reg;
+
+    always @(posedge clk)               // write to buffer only when write is enabled and the buffer is not filled
+        if (wr_en)  
+            buff[w_ptr] <= w_data;
+
+
     always @* begin
 
         if (rst) begin
             // on reset, reinitiliaze buffer
             w_ptr <= 0;
             r_ptr <= 0;
-            // w_ptr_next <= 0;
-            // r_ptr_next <= 0;
             empty_reg <= 1'b1;
             full_reg <= 1'b0;
-            // full_next <= 1'b0;
-            // empty_next <= 1'b1;
         end
         else begin
             // assign new state to current state
